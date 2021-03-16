@@ -1,13 +1,14 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include "ChessPiece.h"
 
 using namespace sf;
 
 class ChessDisplay
 {
 public:
-	void DisplayBoard(int piece[][8], RenderWindow& window);
+	void DisplayBoard(ChessPiece **piece, RenderWindow& window);
 	int* SetSelected(Vector2i location);
 
 } extern cDisp;

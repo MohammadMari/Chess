@@ -1,12 +1,11 @@
 #include "ChessDisplay.h"
-#include <iostream>
+
 
 using namespace std;
 
-
 ChessDisplay cDisp;
 
-void ChessDisplay::DisplayBoard(int piece[][8], RenderWindow& window)
+void ChessDisplay::DisplayBoard(ChessPiece **piece, RenderWindow& window)
 {
 	Texture PW, PB, KW, KB, KnW, KnB, QW, QB, RW, RB, BW, BB;
 	PW.loadFromFile("images/pawnw.png");
@@ -42,7 +41,7 @@ void ChessDisplay::DisplayBoard(int piece[][8], RenderWindow& window)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			switch (piece[i][j])
+			switch (piece[i][j].type)
 			{
 			case 1: {
 				PawnW.setPosition(Vector2f(j * 100, i * 100));
@@ -100,11 +99,8 @@ void ChessDisplay::DisplayBoard(int piece[][8], RenderWindow& window)
 int* ChessDisplay::SetSelected(Vector2i location)
 {
 	int* selectedPiece = (int*)malloc(sizeof(int) * 2);
-
-	cout << "X: " << location.x << endl;
 	selectedPiece[0] = floor(location.x / 100); 
 	selectedPiece[1] = floor(location.y / 100);
-	cout << selectedPiece[0] << endl << selectedPiece[1] << endl;
 
 	return selectedPiece;
 }

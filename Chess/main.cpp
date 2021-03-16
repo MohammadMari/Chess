@@ -1,19 +1,86 @@
 #include "ChessDisplay.h"
+#include "ChessPiece.h"
+#include <iostream>
 
 using namespace sf;
 
-class ChessPiece
+const int side = 1; //set to one or negative one this is temporary and for testing only
+ChessPiece def; //probably useless, if not find a better way to do it
+bool turn = true; //again find a different way
+
+
+
+
+bool isSide(int piece)
 {
-public:
-	int type;
-	bool usable;
-};
+	if (piece < 0 && side < 0 && turn)
+		return true;
+	else if (piece > 0 && side > 0 && turn)
+		return true;
+	else if (piece < 0 && side > 0 && !turn)
+		return true;
+	else if (piece > 0 && side < 0 && !turn)
+		return true;
+
+	return false;
+}
+
+
+
+
+ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
+{
+	//W = +
+	//B = -
+	/*
+		pawn = 1
+		knight = 2
+		bishop = 3
+		rook = 4
+		king = 5
+		queen = 6
+	*/
+
+	//pawn movement
+	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 1)
+	{
+		if (newSelected[1] == (oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type) && newSelected[0] == oldSelected[0] && board[newSelected[1]][newSelected[0]].type == 0) //check for one space ahead
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[newSelected[1]][newSelected[0]].moved = true;
+			board[oldSelected[1]][oldSelected[0]] = def;
+			turn = !turn;
+		}
+		else if (newSelected[1] == (oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type) && (newSelected[0] == (oldSelected[0] + 1) || newSelected[0] == (oldSelected[0] - 1)) && !isSide(board[newSelected[1]][newSelected[0]].type)) //check diag
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[newSelected[1]][newSelected[0]].moved = true;
+			board[oldSelected[1]][oldSelected[0]] = def;
+			turn = !turn;
+		}
+		else if (!board[oldSelected[1]][oldSelected[0]].moved && newSelected[1] == (oldSelected[1] - (board[oldSelected[1]][oldSelected[0]].type * 2)) && newSelected[0] == oldSelected[0] && board[newSelected[1]][newSelected[0]].type == 0)//check for two spaces ahead
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[newSelected[1]][newSelected[0]].moved = true;
+			board[oldSelected[1]][oldSelected[0]] = def;
+			turn = !turn;
+		}
+		//todo check for that french special case move
+			
+	}
+
+	return board;
+}
+
 
 
 
 
 int main()
 {
+	def.type = 0;
+	def.moved = false;
+	def.usable = false;
 	RenderWindow window(VideoMode(800, 800), "Chess");
 	Event event;
 
@@ -34,16 +101,35 @@ int main()
 	int* selectedPiece = (int*)malloc(sizeof(int) * 2);
 	int* oldselectedPiece = (int*)malloc(sizeof(int) * 2);
 
-	//change int to actual chess piece class?
-	int piece[8][8] = { { -4,-2,-3,-6,-5,-3,-2,-4 },
-						{ -1,-1,-1,-1,-1,-1,-1,-1 },
-						{ 0,0,0,0,0,0,0,0 },
-						{ 0,0,0,0,0,0,0,0 },
-						{ 0,0,0,0,0,0,0,0 },
-						{ 0,0,0,0,0,0,0,0 },
-						{ 1,1,1,1,1,1,1,1 },
-						{ 4,2,3,6,5,3,2,4 } };
+	oldselectedPiece[0] = 50;
+	oldselectedPiece[1] = 50;
 
+	//change int to actual chess piece class?
+	const int pieceLoc[8][8] = { { -4,-2,-3,-6,-5,-3,-2,-4 },
+								{ -1,-1,-1,-1,-1,-1,-1,-1 },
+								{ 0,0,0,0,0,0,0,0 },
+								{ 0,0,0,0,0,0,0,0 },
+								{ 0,0,0,0,0,0,0,0 },
+								{ 0,0,0,0,0,0,0,0 },
+								{ 1,1,1,1,1,1,1,1 },
+								{ 4,2,3,6,5,3,2,4 } };
+
+	//change to vector?
+	ChessPiece** pieces = (ChessPiece**)malloc(8 * sizeof(ChessPiece));
+
+	for (int i = 0; i < 8; i++)
+	{
+		pieces[i] = (ChessPiece*)malloc(8 * sizeof(ChessPiece));
+	}
+
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			pieces[j][i].type = pieceLoc[j][i];
+			pieces[j][i].moved = false;
+		}
+	}
 
 
 	Sprite chessboard(chessTexture);
@@ -60,19 +146,25 @@ int main()
 			if (event.type == Event::MouseButtonPressed)
 			{
 				selectedPiece = cDisp.SetSelected(Mouse::getPosition(window));
-				if (piece[selectedPiece[1]][selectedPiece[0]] != 0)
+
+
+				if (isSide(pieces[selectedPiece[1]][selectedPiece[0]].type))
 				{
-					//board is upside down  ?????? fix pls k thx
 					circle.setPosition(Vector2f(selectedPiece[0] * 100, selectedPiece[1] * 100));
 					oldselectedPiece = selectedPiece;
 				}
-				else if (piece[oldselectedPiece[1]][oldselectedPiece[0]] != 0)
+				else if (oldselectedPiece[0] != 50) //scuffed fix :)
 				{
-					//just move the piece :muscle:
-					int oldpiece = piece[oldselectedPiece[1]][oldselectedPiece[0]];
-					piece[oldselectedPiece[1]][oldselectedPiece[0]] = 0;
-					piece[selectedPiece[1]][selectedPiece[0]] = oldpiece;
+					if (!isSide(pieces[selectedPiece[1]][selectedPiece[0]].type))
+					{
+						pieces = Movement(pieces, oldselectedPiece, selectedPiece);
+						//pieces[selectedPiece[1]][selectedPiece[0]].type = pieces[oldselectedPiece[1]][oldselectedPiece[0]].type;
+						//pieces[oldselectedPiece[1]][oldselectedPiece[0]].type = 0;
+
+					}
 				}
+
+
 			}
 		}
 
@@ -81,9 +173,14 @@ int main()
 		window.clear();
 		window.draw(chessboard);
 		window.draw(circle);
-		cDisp.DisplayBoard(piece, window);
+		cDisp.DisplayBoard(pieces, window);
 		window.display();
 	}
+
+	free(selectedPiece);
+	free(oldselectedPiece);
+	free(pieces);
+
 
 	return 0;
 }
