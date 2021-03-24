@@ -30,6 +30,9 @@ bool isSide(int piece)
 
 ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 {
+	//TODO make sure checked pieces cant move. What im thinking rn is to make a fake board with the move the player tried to make,
+	//if king becomes checked then thats no good, just dont do it on the real board. there is prob a better way but this sounds easy.
+
 	//W = +
 	//B = -
 	/*
@@ -42,8 +45,13 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 	*/
 
 	//pawn movement
+
+	//old selected represents the second last piece/place the player selected
+	// so it checks if its a pawn
 	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 1)
 	{
+		//newSelected[1] is the Y axis, oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type is used to evaluate what way the pawn moves up, if it is equal to one forward, its happy
+		//oldSelected[0] == newSelected[0] is just saying its on the same X axis, hasn't moved left or right, checks to see if up ahead its empty.
 		if (newSelected[1] == (oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type) && newSelected[0] == oldSelected[0] && board[newSelected[1]][newSelected[0]].type == 0) //check for one space ahead
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
@@ -51,13 +59,15 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 			board[oldSelected[1]][oldSelected[0]] = def;
 			turn = !turn;
 		}
-		else if (newSelected[1] == (oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type) && (newSelected[0] == (oldSelected[0] + 1) || newSelected[0] == (oldSelected[0] - 1)) && !isSide(board[newSelected[1]][newSelected[0]].type)) //check diag
+		//checks one square left and right, if either is selected it checks to see if the side selected is occupied by a player not on the same side.
+		else if (newSelected[1] == (oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type) && (newSelected[0] == (oldSelected[0] + 1) || newSelected[0] == (oldSelected[0] - 1)) && !isSide(board[newSelected[1]][newSelected[0]].type) && board[newSelected[1]][newSelected[0]].type) //check diag
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
 			board[newSelected[1]][newSelected[0]].moved = true;
 			board[oldSelected[1]][oldSelected[0]] = def;
 			turn = !turn;
 		}
+		//first move pawn makes allows it to move up two spaces. This is for that.
 		else if (!board[oldSelected[1]][oldSelected[0]].moved && newSelected[1] == (oldSelected[1] - (board[oldSelected[1]][oldSelected[0]].type * 2)) && newSelected[0] == oldSelected[0] && board[newSelected[1]][newSelected[0]].type == 0)//check for two spaces ahead
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
@@ -66,7 +76,25 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 			turn = !turn;
 		}
 		//todo check for that french special case move
-			
+	}
+
+
+	//knight movement
+	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 2)
+	{
+		//knights move either 2 X 1 Y or 1 X 2 Y. I just check to see if they move that much, make sure the space is empty or is an enemy and move it there.
+		if (abs(newSelected[0] - oldSelected[0]) == 2 && abs(newSelected[1] - oldSelected[1]) == 1 && !isSide(board[newSelected[1]][newSelected[0]].type))
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]] = def;
+			turn = !turn;
+		}
+		else if (abs(newSelected[0] - oldSelected[0]) == 1 && abs(newSelected[1] - oldSelected[1]) == 2 && !isSide(board[newSelected[1]][newSelected[0]].type))
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]] = def;
+			turn = !turn;
+		}
 	}
 
 	return board;
