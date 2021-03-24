@@ -44,3 +44,5 @@
 *.db
 *.db-wal
 *.opendb
+.vs/Chess/v16/.suo
+*.ilk
