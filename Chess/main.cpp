@@ -5,7 +5,6 @@
 using namespace sf;
 
 const int side = 1; //set to one or negative one this is temporary and for testing only
-ChessPiece def; //probably useless, if not find a better way to do it
 bool turn = true; //again find a different way
 
 
@@ -25,7 +24,45 @@ bool isSide(int piece)
 	return false;
 }
 
+//check to see if the 
+bool ValidMove(ChessPiece** board, int* oldSelected, int* newSelected)
+{
+	//int difx = newSelected[0]- oldSelected[0];
+	//int dify = newSelected[1] - oldSelected[1];
+	//int xIt, yIt; //x and y iterator
 
+	//xIt = copysignf(1, difx);
+	//yIt = copysignf(1, dify);
+	//
+
+	//if (abs(difx) == abs(dify)) //moving diag
+	//{
+	//	for (int i = 0; i < abs(difx); i++)
+	//	{
+	//		if (board[oldSelected[0] + (i * xIt)][oldSelected[1] + (i * yIt)].type != 0)
+	//		{
+	//			return false;
+	//		}
+	//	}
+	//}
+	//moving straight
+	if (difx == 0)
+	{
+		for (int i = oldSelected[0]; i != newSelected[0]; i += xIt)
+		{
+			if (board[i][newSelected[1]].type != 0)
+			{
+				return false;
+			}
+		}
+	}
+
+
+
+
+
+	return true;
+}
 
 
 ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
@@ -48,7 +85,7 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 
 	//old selected represents the second last piece/place the player selected
 	// so it checks if its a pawn
-	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 1)
+	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 1 && ValidMove(board, oldSelected, newSelected))
 	{
 		//newSelected[1] is the Y axis, oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type is used to evaluate what way the pawn moves up, if it is equal to one forward, its happy
 		//oldSelected[0] == newSelected[0] is just saying its on the same X axis, hasn't moved left or right, checks to see if up ahead its empty.
@@ -56,7 +93,7 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
 			board[newSelected[1]][newSelected[0]].moved = true;
-			board[oldSelected[1]][oldSelected[0]] = def;
+			board[oldSelected[1]][oldSelected[0]].Default();
 			turn = !turn;
 		}
 		//checks one square left and right, if either is selected it checks to see if the side selected is occupied by a player not on the same side.
@@ -64,7 +101,7 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
 			board[newSelected[1]][newSelected[0]].moved = true;
-			board[oldSelected[1]][oldSelected[0]] = def;
+			board[oldSelected[1]][oldSelected[0]].Default();
 			turn = !turn;
 		}
 		//first move pawn makes allows it to move up two spaces. This is for that.
@@ -72,7 +109,7 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
 			board[newSelected[1]][newSelected[0]].moved = true;
-			board[oldSelected[1]][oldSelected[0]] = def;
+			board[oldSelected[1]][oldSelected[0]].Default();
 			turn = !turn;
 		}
 		//todo check for that french special case move
@@ -86,13 +123,26 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 		if (abs(newSelected[0] - oldSelected[0]) == 2 && abs(newSelected[1] - oldSelected[1]) == 1 && !isSide(board[newSelected[1]][newSelected[0]].type))
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
-			board[oldSelected[1]][oldSelected[0]] = def;
+			board[oldSelected[1]][oldSelected[0]].Default();
 			turn = !turn;
 		}
 		else if (abs(newSelected[0] - oldSelected[0]) == 1 && abs(newSelected[1] - oldSelected[1]) == 2 && !isSide(board[newSelected[1]][newSelected[0]].type))
 		{
 			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
-			board[oldSelected[1]][oldSelected[0]] = def;
+			board[oldSelected[1]][oldSelected[0]].Default();
+			turn = !turn;
+		}
+	}
+
+	//bishop movement
+	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 3 && ValidMove(board, oldSelected, newSelected))
+	{
+
+		//bishops can only move diag. If they move the same amount of X and Y then its a valid move.
+		if (abs(newSelected[0] - oldSelected[0]) == abs(newSelected[1] - oldSelected[1]) && !isSide(board[newSelected[1]][newSelected[0]].type))
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]].Default();
 			turn = !turn;
 		}
 	}
@@ -106,9 +156,6 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 
 int main()
 {
-	def.type = 0;
-	def.moved = false;
-	def.usable = false;
 	RenderWindow window(VideoMode(800, 800), "Chess");
 	Event event;
 
@@ -162,7 +209,7 @@ int main()
 
 	Sprite chessboard(chessTexture);
 	Sprite circle(circ);
-
+	bool draw = false;
 
 	while (window.isOpen())
 	{
@@ -175,6 +222,10 @@ int main()
 			{
 				selectedPiece = cDisp.SetSelected(Mouse::getPosition(window));
 
+				if (isSide(pieces[selectedPiece[1]][selectedPiece[0]].type))
+					draw = true;
+				else
+					draw = false;
 
 				if (isSide(pieces[selectedPiece[1]][selectedPiece[0]].type))
 				{
@@ -186,13 +237,8 @@ int main()
 					if (!isSide(pieces[selectedPiece[1]][selectedPiece[0]].type))
 					{
 						pieces = Movement(pieces, oldselectedPiece, selectedPiece);
-						//pieces[selectedPiece[1]][selectedPiece[0]].type = pieces[oldselectedPiece[1]][oldselectedPiece[0]].type;
-						//pieces[oldselectedPiece[1]][oldselectedPiece[0]].type = 0;
-
 					}
 				}
-
-
 			}
 		}
 
@@ -200,7 +246,8 @@ int main()
 		//display stuff
 		window.clear();
 		window.draw(chessboard);
-		window.draw(circle);
+		if (draw)
+			window.draw(circle);
 		cDisp.DisplayBoard(pieces, window);
 		window.display();
 	}
