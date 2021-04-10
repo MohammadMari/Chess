@@ -46,3 +46,6 @@
 *.opendb
 .vs/Chess/v16/.suo
 *.ilk
+*.ipch
+.vs/Chess/v16/.suo
+*.ilk

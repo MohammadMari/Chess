@@ -27,39 +27,47 @@ bool isSide(int piece)
 //check to see if the 
 bool ValidMove(ChessPiece** board, int* oldSelected, int* newSelected)
 {
-	//int difx = newSelected[0]- oldSelected[0];
-	//int dify = newSelected[1] - oldSelected[1];
-	//int xIt, yIt; //x and y iterator
+	int difx = newSelected[0] - oldSelected[0];
+	int dify = newSelected[1] - oldSelected[1];
+	int xIt, yIt; //x and y iterator
 
-	//xIt = copysignf(1, difx);
-	//yIt = copysignf(1, dify);
-	//
+	xIt = copysignf(1, difx);
+	yIt = copysignf(1, dify);
 
-	//if (abs(difx) == abs(dify)) //moving diag
-	//{
-	//	for (int i = 0; i < abs(difx); i++)
-	//	{
-	//		if (board[oldSelected[0] + (i * xIt)][oldSelected[1] + (i * yIt)].type != 0)
-	//		{
-	//			return false;
-	//		}
-	//	}
-	//}
-	//moving straight
-	if (difx == 0)
+
+	if (abs(difx) == abs(dify)) //moving diag
 	{
-		for (int i = oldSelected[0]; i != newSelected[0]; i += xIt)
+		for (int i = 1; i < abs(dify); i++)
 		{
-			if (board[i][newSelected[1]].type != 0)
+			if (board[oldSelected[1] + (i * yIt)][oldSelected[0] + (i * xIt)].type != 0)
+			{
+				return false;
+			}
+		}
+	}
+	//moving straight
+	else if (difx == 0)
+	{
+		for (int i = 1; i < abs(dify); i++)
+		{
+			if (board[oldSelected[1] + (i * yIt)][newSelected[0]].type != 0)
+			{
+				return false;
+			}
+		}
+	}
+	else if (dify == 0)
+	{
+		for (int i = 1; i < abs(difx); i++)
+		{
+			if (board[newSelected[1]][oldSelected[0] + (i * yIt)].type != 0)
 			{
 				return false;
 			}
 		}
 	}
 
-
-
-
+	//now to check for king check
 
 	return true;
 }
@@ -69,6 +77,8 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 {
 	//TODO make sure checked pieces cant move. What im thinking rn is to make a fake board with the move the player tried to make,
 	//if king becomes checked then thats no good, just dont do it on the real board. there is prob a better way but this sounds easy.
+
+	// Y = [1], X = [0]
 
 	//W = +
 	//B = -
@@ -85,6 +95,8 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 
 	//old selected represents the second last piece/place the player selected
 	// so it checks if its a pawn
+
+	//remove valid spot checks, we're already checking for it now.
 	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 1 && ValidMove(board, oldSelected, newSelected))
 	{
 		//newSelected[1] is the Y axis, oldSelected[1] - board[oldSelected[1]][oldSelected[0]].type is used to evaluate what way the pawn moves up, if it is equal to one forward, its happy
@@ -146,6 +158,59 @@ ChessPiece** Movement(ChessPiece** board, int* oldSelected, int* newSelected)
 			turn = !turn;
 		}
 	}
+
+	//rook movement
+	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 4 && ValidMove(board, oldSelected, newSelected))
+	{
+		// X and Y movement
+		if (abs(newSelected[0] - oldSelected[0]) == 0 || abs(newSelected[1] - oldSelected[1]) == 0)
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]].Default();
+			turn = !turn;
+		}
+	}
+
+
+	//king movement
+	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 5 && ValidMove(board, oldSelected, newSelected))
+	{
+
+		//pasted straight from bishop.
+		//made sure they can only move one square
+		if ((abs(newSelected[0] - oldSelected[0]) == 1) && (abs(newSelected[1] - oldSelected[1]) == 1) && !isSide(board[newSelected[1]][newSelected[0]].type))
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]].Default();
+			turn = !turn;
+		}
+		else if ((abs(newSelected[0] - oldSelected[0]) == 0 && abs(newSelected[1] - oldSelected[1]) == 1) || (abs(newSelected[1] - oldSelected[1]) == 0 && abs(newSelected[0] - oldSelected[0]) == 1))
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]].Default();
+			turn = !turn;
+		}
+	}
+
+	//queen movement
+	if (abs(board[oldSelected[1]][oldSelected[0]].type) == 6 && ValidMove(board, oldSelected, newSelected))
+	{
+		//pasted straigt from bishop.
+		if (abs(newSelected[0] - oldSelected[0]) == abs(newSelected[1] - oldSelected[1]) && !isSide(board[newSelected[1]][newSelected[0]].type))
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]].Default();
+			turn = !turn;
+		}
+		// X and Y movement
+		else if (abs(newSelected[0] - oldSelected[0]) == 0 || abs(newSelected[1] - oldSelected[1]) == 0)
+		{
+			board[newSelected[1]][newSelected[0]] = board[oldSelected[1]][oldSelected[0]];
+			board[oldSelected[1]][oldSelected[0]].Default();
+			turn = !turn;
+		}
+	}
+
 
 	return board;
 }
